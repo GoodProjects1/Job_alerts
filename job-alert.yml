@@ -1,0 +1,38 @@
+name: Aggiorna offerte di lavoro
+
+# Quando girare
+on:
+  schedule:
+    - cron: "0 6 * * *"      # ogni giorno alle 06:00 UTC (07:00/08:00 in Italia)
+  workflow_dispatch:          # permette anche l'avvio manuale dal sito di GitHub
+
+# Serve per poter scrivere jobs.json nel repo
+permissions:
+  contents: write
+
+jobs:
+  raccogli:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Scarica il codice
+        uses: actions/checkout@v4
+
+      - name: Prepara Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Esegui lo scraper
+        run: python scraper.py
+
+      - name: Salva i risultati nel repo
+        run: |
+          git config user.name "job-alert-bot"
+          git config user.email "actions@github.com"
+          git add jobs.json seen.json
+          if git diff --staged --quiet; then
+            echo "Nessuna novità da salvare."
+          else
+            git commit -m "Aggiornamento offerte $(date +%F)"
+            git push
+          fi

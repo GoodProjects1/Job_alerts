@@ -1,0 +1,462 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Il mio radar offerte</title>
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,600;1,9..144,500&family=Inter:wght@400;500;600&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#F4F6F2; --surface:#FFFFFF; --ink:#16201C; --muted:#6B7770;
+    --hair:#E2E6E0; --emerald:#1F6F54; --emerald-soft:#E6F0EB;
+    --amber:#D98A1F; --amber-soft:#FBEFD9; --blue:#2F5E8C; --blue-soft:#E7EEF6;
+    --shadow:0 1px 2px rgba(22,32,28,.05), 0 8px 24px rgba(22,32,28,.06);
+    --radius:14px;
+  }
+  *{box-sizing:border-box;}
+  body{margin:0;background:var(--bg);color:var(--ink);
+    font-family:"Inter",system-ui,-apple-system,Segoe UI,Roboto,sans-serif;
+    line-height:1.5;-webkit-font-smoothing:antialiased;}
+  .wrap{max-width:780px;margin:0 auto;padding:28px 20px 90px;}
+  .mono{font-family:"Space Mono",monospace;}
+
+  /* Banner anteprima */
+  .demo-banner{background:var(--amber-soft);border:1px solid #EBD3A3;color:#7a5a1a;
+    font-size:13px;line-height:1.45;padding:11px 14px;border-radius:10px;margin-bottom:18px;}
+  .demo-banner code{font-family:"Space Mono",monospace;font-size:12px;}
+
+  /* Briefing */
+  .briefing{padding:4px 2px 24px;border-bottom:1px solid var(--hair);margin-bottom:20px;}
+  .eyebrow{font-family:"Space Mono",monospace;font-size:12px;letter-spacing:.14em;
+    text-transform:uppercase;color:var(--muted);margin:0 0 12px;}
+  .count-row{display:flex;align-items:baseline;gap:14px;flex-wrap:wrap;}
+  .count{font-family:"Fraunces",Georgia,serif;font-weight:600;
+    font-size:clamp(44px,11vw,72px);line-height:.9;color:var(--emerald);letter-spacing:-.02em;}
+  .count.pulse::after{content:"";display:inline-block;width:11px;height:11px;margin-left:10px;
+    border-radius:50%;background:var(--amber);vertical-align:middle;animation:pulse 2.4s ease-in-out infinite;}
+  @keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(217,138,31,.45);}50%{box-shadow:0 0 0 9px rgba(217,138,31,0);}}
+  .count-label{font-family:"Fraunces",Georgia,serif;font-style:italic;font-weight:500;
+    font-size:clamp(19px,5vw,26px);}
+  .sub{margin:13px 0 0;font-size:13.5px;color:var(--muted);font-family:"Space Mono",monospace;}
+
+  /* Pannello criteri */
+  .panel{background:var(--surface);border:1px solid var(--hair);border-radius:var(--radius);
+    box-shadow:var(--shadow);margin-bottom:18px;overflow:hidden;}
+  .panel-head{display:flex;align-items:center;justify-content:space-between;gap:12px;
+    padding:15px 18px;cursor:pointer;user-select:none;}
+  .panel-head h2{font-family:"Fraunces",serif;font-weight:600;font-size:17px;margin:0;letter-spacing:-.01em;}
+  .panel-head .hint{font-size:12px;color:var(--muted);font-family:"Space Mono",monospace;}
+  .panel-head .arrow{transition:transform .2s ease;color:var(--muted);font-size:13px;}
+  .panel.open .panel-head .arrow{transform:rotate(180deg);}
+  .panel-body{display:none;padding:4px 18px 20px;border-top:1px solid var(--hair);}
+  .panel.open .panel-body{display:block;}
+
+  .group{border:1px solid var(--hair);border-radius:11px;padding:13px 14px;margin-top:14px;background:#FCFDFB;}
+  .group-top{display:flex;align-items:center;gap:9px;flex-wrap:wrap;margin-bottom:10px;}
+  .group-label{font:inherit;font-weight:600;font-size:14px;color:var(--ink);border:none;
+    background:transparent;padding:2px 4px;border-bottom:1px dashed var(--hair);min-width:90px;max-width:170px;}
+  .group-label:focus{outline:none;border-bottom-color:var(--emerald);}
+  .mini{font-family:"Space Mono",monospace;font-size:11px;color:var(--muted);}
+  select.mode,input.weight{font:inherit;font-size:12.5px;border:1px solid var(--hair);
+    border-radius:8px;padding:5px 8px;background:#fff;color:var(--ink);}
+  input.weight{width:54px;}
+  .req{color:var(--emerald);} .bonus{color:var(--blue);}
+  .group .remove-group{margin-left:auto;border:none;background:transparent;color:var(--muted);
+    cursor:pointer;font-size:18px;line-height:1;padding:2px 6px;border-radius:6px;}
+  .group .remove-group:hover{color:#b23;background:#fbeaea;}
+
+  .tags-edit{display:flex;flex-wrap:wrap;gap:6px;align-items:center;}
+  .term{display:inline-flex;align-items:center;gap:5px;background:var(--emerald-soft);color:var(--emerald);
+    font-size:12.5px;padding:4px 6px 4px 10px;border-radius:7px;}
+  .term.x{background:#FBEAEA;color:#b23;}
+  .term button{border:none;background:transparent;color:inherit;cursor:pointer;font-size:14px;
+    line-height:1;padding:0 2px;border-radius:4px;}
+  .term-input{font:inherit;font-size:13px;border:1px dashed var(--hair);border-radius:7px;
+    padding:5px 9px;min-width:120px;flex:1;background:#fff;color:var(--ink);}
+  .term-input:focus{outline:none;border-color:var(--emerald);border-style:solid;}
+
+  .panel-row{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-top:16px;}
+  .panel-row label{font-size:13px;color:var(--ink);}
+  input[type=range]{accent-color:var(--emerald);}
+  input.num{font:inherit;font-size:13px;width:80px;border:1px solid var(--hair);border-radius:8px;padding:6px 8px;}
+
+  .btns{display:flex;gap:9px;flex-wrap:wrap;margin-top:18px;}
+  .btn{font:inherit;font-size:13px;font-weight:600;border-radius:9px;padding:9px 14px;cursor:pointer;border:1px solid var(--hair);background:#fff;color:var(--ink);transition:all .15s ease;}
+  .btn:hover{border-color:var(--emerald);color:var(--emerald);}
+  .btn.solid{background:var(--ink);color:#fff;border-color:var(--ink);}
+  .btn.solid:hover{background:var(--emerald);border-color:var(--emerald);color:#fff;}
+  .btn.ghost{border-style:dashed;}
+  .export{margin-top:14px;display:none;}
+  .export.show{display:block;}
+  .export textarea{width:100%;min-height:120px;font-family:"Space Mono",monospace;font-size:12px;
+    border:1px solid var(--hair);border-radius:10px;padding:12px;color:var(--ink);background:#FCFDFB;resize:vertical;}
+  .export p{font-size:12.5px;color:var(--muted);margin:0 0 8px;}
+
+  /* Ricerca rapida */
+  .search{width:100%;padding:13px 16px;border:1px solid var(--hair);border-radius:11px;
+    background:var(--surface);font:inherit;font-size:15px;color:var(--ink);box-shadow:var(--shadow);margin-bottom:18px;}
+  .search:focus{outline:2px solid var(--emerald);outline-offset:1px;border-color:transparent;}
+
+  /* Feed */
+  .feed-head{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:12px;}
+  .feed-head .n{font-family:"Space Mono",monospace;font-size:12px;color:var(--muted);}
+  .feed{display:flex;flex-direction:column;gap:12px;}
+  .card{position:relative;background:var(--surface);border:1px solid var(--hair);border-radius:var(--radius);
+    padding:17px 20px 16px 22px;box-shadow:var(--shadow);overflow:hidden;
+    animation:rise .45s cubic-bezier(.2,.7,.3,1) both;}
+  @keyframes rise{from{opacity:0;transform:translateY(9px);}to{opacity:1;transform:none;}}
+  .card::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--rail,var(--muted));}
+  .card-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;}
+  .role{font-family:"Fraunces",Georgia,serif;font-weight:600;font-size:18.5px;line-height:1.25;margin:0;letter-spacing:-.01em;}
+  .role mark{background:var(--amber-soft);color:var(--ink);padding:0 2px;border-radius:3px;}
+  .score{flex:none;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    min-width:46px;padding:6px 4px;background:var(--emerald-soft);border-radius:10px;}
+  .score b{font-family:"Space Mono",monospace;font-size:17px;color:var(--emerald);line-height:1;}
+  .score span{font-size:9px;letter-spacing:.08em;text-transform:uppercase;color:var(--emerald);margin-top:2px;}
+  .org{margin:7px 0 0;font-size:14px;}
+  .org .where{color:var(--muted);}
+  .sal{display:inline-block;margin-top:9px;font-family:"Space Mono",monospace;font-size:12.5px;
+    color:#7a5a1a;background:var(--amber-soft);padding:3px 9px;border-radius:7px;}
+  .matched{display:flex;gap:6px;flex-wrap:wrap;margin-top:11px;}
+  .mtag{font-size:11.5px;color:var(--emerald);background:var(--emerald-soft);padding:3px 9px;border-radius:6px;}
+  .mtag.b{color:var(--blue);background:var(--blue-soft);}
+  .meta{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px;padding-top:12px;border-top:1px solid var(--hair);}
+  .source{font-family:"Space Mono",monospace;font-size:11px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted);}
+  .dot{width:3px;height:3px;border-radius:50%;background:var(--hair);}
+  .date{font-family:"Space Mono",monospace;font-size:12px;color:var(--muted);}
+  .new-badge{font-family:"Space Mono",monospace;font-size:10px;font-weight:700;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--amber);background:var(--amber-soft);padding:3px 7px;border-radius:6px;}
+  .apply{margin-left:auto;font-size:13px;font-weight:600;color:#fff;text-decoration:none;
+    background:var(--ink);padding:8px 16px;border-radius:9px;transition:background .15s ease;}
+  .apply:hover{background:var(--emerald);}
+
+  .empty{text-align:center;padding:48px 20px;color:var(--muted);}
+  .empty h3{font-family:"Fraunces",serif;font-style:italic;font-weight:500;color:var(--ink);margin:0 0 6px;}
+  .footer{margin-top:30px;text-align:center;font-size:12px;color:var(--muted);font-family:"Space Mono",monospace;}
+
+  @media (prefers-reduced-motion:reduce){.card{animation:none;}.count.pulse::after{animation:none;}}
+  @media (max-width:480px){.score{min-width:42px;}}
+</style>
+</head>
+<body>
+<main class="wrap">
+  <div id="demoBanner" class="demo-banner" hidden>
+    <strong>Modalità anteprima.</strong> Stai vedendo dati di esempio. Esegui
+    <code>python scraper.py</code> e apri la pagina tramite un server
+    (<code>python -m http.server</code>, non con doppio clic) per le offerte reali.
+  </div>
+
+  <header class="briefing">
+    <p class="eyebrow" id="todayLabel">Briefing del giorno</p>
+    <div class="count-row">
+      <span class="count" id="newCount">0</span>
+      <span class="count-label" id="newCopy">offerte pertinenti</span>
+    </div>
+    <p class="sub" id="status">Caricamento…</p>
+  </header>
+
+  <!-- ============ CRITERI (modificabili qui) ============ -->
+  <section class="panel open" id="panel">
+    <div class="panel-head" id="panelHead">
+      <div>
+        <h2>Criteri di ricerca</h2>
+        <span class="hint">tutti i gruppi “obbligatori” devono combaciare</span>
+      </div>
+      <span class="arrow">▲</span>
+    </div>
+    <div class="panel-body" id="criteriaBody"><!-- generato via JS --></div>
+  </section>
+
+  <input class="search" id="search" type="search"
+         placeholder="Filtra anche per testo libero…" autocomplete="off" />
+
+  <div class="feed-head">
+    <span class="mono" style="font-size:12px;color:var(--muted)">Risultati</span>
+    <span class="n" id="resultCount"></span>
+  </div>
+  <section class="feed" id="feed" aria-live="polite"></section>
+
+  <p class="footer">I criteri si salvano nel tuo browser. Aggiornamento offerte ogni mattina.</p>
+</main>
+
+<script>
+/* ====================================================================
+   STORAGE sicuro: usa localStorage (persiste sul sito pubblicato),
+   con fallback in memoria se non disponibile (es. anteprima Claude).
+==================================================================== */
+const mem = {};
+const store = {
+  get(k){ try{ const v=localStorage.getItem(k); return v?JSON.parse(v):(mem[k]??null);}catch(e){return mem[k]??null;} },
+  set(k,v){ try{ localStorage.setItem(k,JSON.stringify(v)); }catch(e){ mem[k]=v; } }
+};
+
+/* ====================================================================
+   CRITERI DI DEFAULT — già impostati sul tuo profilo:
+   Crypto/finanziario · da remoto · senior/manager/officer ·
+   ambito dati / tax / compliance / AML · RAL alta.
+   Ogni gruppo "required" deve combaciare (AND); i "bonus" aggiungono punti.
+==================================================================== */
+const DEFAULT_CRITERIA = {
+  groups: [
+    {id:"g_role", label:"Ruolo", mode:"required", weight:4, field:"title",
+     terms:["mlro","deputy mlro","money laundering reporting officer","regulatory reporting","regulatory report","financial reporting","finance reporting","reporting officer","reporting manager","reporting analyst","reporting lead","reporting specialist","regulatory affairs"]},
+    {id:"g_set", label:"Settore", mode:"required", weight:3, field:"any",
+     terms:["crypto","cryptocurrency","blockchain","web3","digital asset","virtual asset","fintech","financial services","bank","banking","payments","exchange","cripto","criptovalute","finanziario","bancario","banca","kryptowährung","finanzdienstleistungen"]},
+    {id:"g_rem", label:"Remoto", mode:"bonus", weight:1, field:"any",
+     terms:["remote","remoto","da remoto","fully remote","work from home","anywhere","smart working","telelavoro","homeoffice","home office"]}
+  ],
+  exclude:["junior","intern","internship","stage","tirocinio","unpaid","working student","praktikum","werkstudent","sales","marketing"],
+  minSalary:0,        // in k€/anno; 0 = ignora
+  filterSalary:false, // se true, nasconde le offerte con RAL nota sotto la soglia
+  minScore:6
+};
+
+let criteria = store.get("criteria") || structuredClone(DEFAULT_CRITERIA);
+let jobs = [];
+let query = "";
+
+const SOURCE_COLORS = {Remotive:"#1F6F54",Arbeitnow:"#3A6EA5",RemoteOK:"#C0563B",
+  Jobicy:"#7A5AA8",Himalayas:"#2E8B6F",Arbeitsagentur:"#C8472B",Greenhouse:"#2E8B6F",Lever:"#B08326",Adzuna:"#444"};
+
+/* Dati demo (crypto/finance) usati solo se manca jobs.json */
+const DEMO = (()=>{ const t=new Date().toISOString().slice(0,10);
+  const d=n=>{const x=new Date();x.setDate(x.getDate()-n);return x.toISOString().slice(0,10);};
+  const J=(title,company,location,tags,source,date,sMin,sMax,extra)=>({title,company,location,tags,source,url:"#",date,
+    salaryMin:sMin,salaryMax:sMax,text:(title+" "+company+" "+location+" "+tags.join(" ")+" "+(extra||"")).toLowerCase()});
+  return [
+    J("Regulatory Reporting Officer","Kraken","Remote · EU",["Reporting","Compliance"],"Greenhouse",t,80000,100000,"crypto exchange regulatory remote"),
+    J("MLRO (Money Laundering Reporting Officer)","Bitpanda","Remote · EU",["AML","MLRO"],"Greenhouse",t,95000,120000,"crypto digital asset financial crime remote"),
+    J("Deputy MLRO","Revolut","Remote · UK",["AML","Compliance"],"Adzuna",d(1),85000,105000,"fintech banking remote"),
+    J("Financial Reporting Manager","N26","Remote · EU",["Finance","Reporting"],"Adzuna",d(1),90000,110000,"bank banking financial services remote"),
+    J("Senior Regulatory Reporting Analyst","Circle","Remote · Worldwide",["Reporting","Data"],"Lever",d(2),null,null,"crypto stablecoin regulatory remote"),
+    J("Compliance Officer","ShoeCorp","Milano",["Compliance"],"Adzuna",t,null,null,"footwear retail manufacturing"),
+    J("Chief Executive Officer","FashionBrand","Remote",["Leadership"],"Remotive",d(1),null,null,"apparel retail ceo"),
+    J("Junior Reporting Analyst – Crypto","Binance","Remote",["Reporting","Junior"],"Jobicy",t,null,null,"crypto junior entry level"),
+    J("Data Analyst","Acme Logistics","Remote",["Data","SQL"],"RemoteOK",d(2),null,null,"supply chain logistics remote")
+  ];
+})();
+
+const TODAY = new Date().toISOString().slice(0,10);
+const el = id=>document.getElementById(id);
+const esc = s=>(s||"").replace(/[&<>"]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;"}[c]));
+
+/* -------------------- MATCHING & SCORING -------------------- */
+function haystack(j){ return j.text || (j.title+" "+j.company+" "+(j.location||"")+" "+(j.tags||[]).join(" ")).toLowerCase(); }
+function fieldText(j,field){ return field==="title" ? (j.title||"").toLowerCase() : haystack(j); }
+
+function scoreJob(j){
+  let score=0; const matched=[];
+  for(const g of criteria.groups){
+    const hay = fieldText(j, g.field||"any");
+    const hit = (g.terms||[]).some(t=>t&&hay.includes(t.toLowerCase()));
+    if(hit){ score += Number(g.weight)||1; matched.push({label:g.label,mode:g.mode}); }
+    else if(g.mode==="required"){ return null; } // un gruppo obbligatorio non combacia → scartata
+  }
+  if((criteria.exclude||[]).some(t=>t&&haystack(j).includes(t.toLowerCase()))) return null;
+  // bonus RAL alta quando lo stipendio è noto
+  const sal = j.salaryMax || j.salaryMin || 0;
+  if(criteria.minSalary>0 && sal){
+    if(sal < criteria.minSalary*1000){ if(criteria.filterSalary) return null; }
+    else { score += 2; }
+  }
+  if(score < (criteria.minScore||0)) return null;
+  j._score=score; j._matched=matched;
+  return j;
+}
+
+function fmtSalary(j){
+  const k=n=>"€"+Math.round(n/1000)+"k";
+  if(j.salaryMin&&j.salaryMax) return k(j.salaryMin)+"–"+k(j.salaryMax);
+  if(j.salaryMax) return "fino a "+k(j.salaryMax);
+  if(j.salaryMin) return "da "+k(j.salaryMin);
+  return null;
+}
+function fmtDate(iso){ if(iso===TODAY)return"oggi";
+  const days=Math.round((Date.parse(TODAY)-Date.parse(iso))/864e5);
+  if(days===1)return"ieri"; if(days>1&&days<7)return days+" giorni fa";
+  try{return new Date(iso).toLocaleDateString("it-IT",{day:"numeric",month:"short"});}catch{return iso;} }
+
+function activeTerms(){ const s=new Set();
+  criteria.groups.forEach(g=>(g.terms||[]).forEach(t=>t&&s.add(t.toLowerCase()))); return [...s]; }
+function highlight(text){ let out=esc(text);
+  activeTerms().sort((a,b)=>b.length-a.length).forEach(t=>{
+    const re=new RegExp("("+t.replace(/[.*+?^${}()|[\]\\]/g,"\\$&")+")","ig");
+    out=out.replace(re,"<mark>$1</mark>"); });
+  return out; }
+
+/* -------------------- RENDER FEED -------------------- */
+function recompute(){
+  let list = jobs.map(j=>scoreJob({...j})).filter(Boolean);
+  if(query){ const q=query.toLowerCase(); list=list.filter(j=>haystack(j).includes(q)); }
+  list.sort((a,b)=> (b._score-a._score) || (b.date||"").localeCompare(a.date||""));
+
+  const newToday = list.filter(j=>j.date===TODAY).length;
+  el("newCount").textContent = list.length;
+  el("newCount").classList.toggle("pulse", newToday>0);
+  el("newCopy").textContent = list.length===1?"offerta pertinente":"offerte pertinenti";
+  el("resultCount").textContent = newToday>0 ? newToday+" nuove oggi" : "";
+
+  const feed=el("feed");
+  if(!list.length){ feed.innerHTML=`<div class="empty"><h3>Nessuna offerta combacia</h3>
+    <p>Allarga un gruppo, abbassa il punteggio minimo o togli un'esclusione.</p></div>`; return; }
+  feed.innerHTML=list.map((j,i)=>{
+    const rail=SOURCE_COLORS[j.source]||"#6B7770";
+    const sal=fmtSalary(j);
+    const tags=(j._matched||[]).map(m=>`<span class="mtag ${m.mode==='bonus'?'b':''}">${esc(m.label)}</span>`).join("");
+    return `<article class="card" style="--rail:${rail};animation-delay:${Math.min(i*40,320)}ms">
+      <div class="card-top">
+        <h3 class="role">${highlight(j.title)}</h3>
+        <div class="score"><b>${j._score}</b><span>match</span></div>
+      </div>
+      <p class="org">${esc(j.company)} · <span class="where">${esc(j.location||"")}</span></p>
+      ${sal?`<span class="sal">${sal}</span>`:""}
+      ${tags?`<div class="matched">${tags}</div>`:""}
+      <div class="meta">
+        <span class="source">${esc(j.source||"")}</span><span class="dot"></span>
+        <span class="date">${fmtDate(j.date)}</span>
+        ${j.date===TODAY?'<span class="new-badge">Nuova</span>':''}
+        <a class="apply" href="${esc(j.url||'#')}" target="_blank" rel="noopener">Apri</a>
+      </div></article>`;
+  }).join("");
+}
+
+/* -------------------- RENDER EDITOR CRITERI -------------------- */
+let focusGid=null;
+function renderCriteria(){
+  const body=el("criteriaBody");
+  const groups=criteria.groups.map(g=>{
+    const terms=(g.terms||[]).map((t,ti)=>
+      `<span class="term"><span>${esc(t)}</span><button data-act="rmterm" data-gid="${g.id}" data-i="${ti}" aria-label="rimuovi">×</button></span>`).join("");
+    return `<div class="group" data-gid="${g.id}">
+      <div class="group-top">
+        <input class="group-label" data-act="label" data-gid="${g.id}" value="${esc(g.label)}" aria-label="nome gruppo"/>
+        <span class="mini">è</span>
+        <select class="mode ${g.mode==='required'?'req':'bonus'}" data-act="mode" data-gid="${g.id}">
+          <option value="required" ${g.mode==='required'?'selected':''}>Obbligatorio (AND)</option>
+          <option value="bonus" ${g.mode==='bonus'?'selected':''}>Bonus (punti)</option>
+        </select>
+        <span class="mini">peso</span>
+        <input class="weight" type="number" min="1" max="9" data-act="weight" data-gid="${g.id}" value="${g.weight}"/>
+        <span class="mini">cerca in</span>
+        <select class="mode" data-act="field" data-gid="${g.id}">
+          <option value="any" ${(g.field||'any')==='any'?'selected':''}>ovunque</option>
+          <option value="title" ${g.field==='title'?'selected':''}>nel titolo</option>
+        </select>
+        <button class="remove-group" data-act="rmgroup" data-gid="${g.id}" title="elimina gruppo">×</button>
+      </div>
+      <div class="tags-edit">
+        ${terms}
+        <input class="term-input" data-gid="${g.id}" placeholder="+ aggiungi termine, Invio"/>
+      </div></div>`;
+  }).join("");
+
+  const exTerms=(criteria.exclude||[]).map((t,ti)=>
+    `<span class="term x"><span>${esc(t)}</span><button data-act="rmex" data-i="${ti}" aria-label="rimuovi">×</button></span>`).join("");
+
+  body.innerHTML = groups + `
+    <div class="group" style="border-color:#F0D9D9;background:#FEFBFB">
+      <div class="group-top"><strong style="font-size:14px">Escludi se contiene</strong></div>
+      <div class="tags-edit">${exTerms}
+        <input class="term-input" id="exInput" placeholder="+ parola da escludere, Invio"/></div>
+    </div>
+    <div class="panel-row">
+      <label for="minScore">Punteggio minimo per comparire: <strong id="minScoreVal">${criteria.minScore}</strong></label>
+      <input type="range" id="minScore" min="0" max="12" value="${criteria.minScore}" style="flex:1;min-width:140px"/>
+    </div>
+    <div class="panel-row">
+      <label><input type="checkbox" id="filterSalary" ${criteria.filterSalary?'checked':''}/> Filtra per RAL minima</label>
+      <input class="num" type="number" id="minSalary" min="0" step="5" value="${criteria.minSalary}" aria-label="RAL minima in migliaia"/>
+      <span class="mini">k€/anno (solo dove la RAL è indicata)</span>
+    </div>
+    <div class="btns">
+      <button class="btn ghost" data-act="addgroup">+ Aggiungi gruppo</button>
+      <button class="btn" data-act="reset">Ripristina i miei criteri</button>
+      <button class="btn solid" data-act="export">Copia config per lo scraper</button>
+    </div>
+    <div class="export" id="exportBox">
+      <p>Incolla questo nella sezione CONFIG di <strong>scraper.py</strong>: definisce la “rete larga” che il server raccoglie ogni giorno, così la dashboard ha sempre abbastanza candidati da filtrare.</p>
+      <textarea id="exportText" readonly></textarea>
+      <div class="btns"><button class="btn" data-act="copyexport">Copia negli appunti</button></div>
+    </div>`;
+
+  if(focusGid){ const inp=body.querySelector(`.term-input[data-gid="${focusGid}"]`); if(inp)inp.focus(); focusGid=null; }
+}
+
+/* -------------------- EVENTI EDITOR -------------------- */
+function save(){ store.set("criteria", criteria); }
+function findGroup(id){ return criteria.groups.find(g=>g.id===id); }
+
+el("criteriaBody").addEventListener("click", e=>{
+  const b=e.target.closest("[data-act]"); if(!b)return;
+  const act=b.dataset.act, gid=b.dataset.gid;
+  if(act==="rmterm"){ const g=findGroup(gid); g.terms.splice(+b.dataset.i,1); save(); renderCriteria(); recompute(); }
+  else if(act==="rmex"){ criteria.exclude.splice(+b.dataset.i,1); save(); renderCriteria(); recompute(); }
+  else if(act==="rmgroup"){ criteria.groups=criteria.groups.filter(g=>g.id!==gid); save(); renderCriteria(); recompute(); }
+  else if(act==="addgroup"){ criteria.groups.push({id:"g"+Date.now(),label:"Nuovo gruppo",mode:"required",weight:2,field:"any",terms:[]}); focusGid=null; save(); renderCriteria(); recompute(); }
+  else if(act==="reset"){ criteria=structuredClone(DEFAULT_CRITERIA); save(); renderCriteria(); recompute(); }
+  else if(act==="export"){ el("exportBox").classList.toggle("show"); el("exportText").value=buildScraperConfig(); }
+  else if(act==="copyexport"){ const ta=el("exportText"); ta.select();
+    try{navigator.clipboard.writeText(ta.value);}catch(_){document.execCommand("copy");}
+    b.textContent="Copiato ✓"; setTimeout(()=>b.textContent="Copia negli appunti",1500); }
+});
+
+el("criteriaBody").addEventListener("keydown", e=>{
+  if(e.key!=="Enter"||!e.target.classList.contains("term-input"))return;
+  e.preventDefault(); const val=e.target.value.trim().toLowerCase(); if(!val)return;
+  if(e.target.id==="exInput"){ if(!criteria.exclude.includes(val))criteria.exclude.push(val); }
+  else{ const g=findGroup(e.target.dataset.gid); if(g&&!g.terms.includes(val)){g.terms.push(val);focusGid=g.id;} }
+  save(); renderCriteria(); recompute();
+});
+
+el("criteriaBody").addEventListener("input", e=>{
+  const t=e.target, act=t.dataset.act;
+  if(act==="label"){ findGroup(t.dataset.gid).label=t.value; save(); recompute(); }
+  else if(act==="weight"){ findGroup(t.dataset.gid).weight=Math.max(1,+t.value||1); save(); recompute(); }
+  else if(t.id==="minScore"){ criteria.minScore=+t.value; el("minScoreVal").textContent=t.value; save(); recompute(); }
+  else if(t.id==="minSalary"){ criteria.minSalary=+t.value||0; save(); recompute(); }
+});
+el("criteriaBody").addEventListener("change", e=>{
+  const t=e.target, act=t.dataset.act;
+  if(act==="mode"){ findGroup(t.dataset.gid).mode=t.value;
+    t.className="mode "+(t.value==="required"?"req":"bonus"); save(); recompute(); }
+  else if(act==="field"){ findGroup(t.dataset.gid).field=t.value; save(); recompute(); }
+  else if(t.id==="filterSalary"){ criteria.filterSalary=t.checked; save(); recompute(); }
+});
+
+function buildScraperConfig(){
+  const terms=activeTerms();
+  const q=a=>'"'+a.replace(/"/g,'')+'"';
+  return "# --- Rete larga (incolla in scraper.py) ---\n"
+    + "CANDIDATE_TERMS = [\n    "+terms.map(q).join(", ")+"\n]\n\n"
+    + "EXCLUDE = [\n    "+(criteria.exclude||[]).map(q).join(", ")+"\n]\n";
+}
+
+/* -------------------- PANNELLO open/close -------------------- */
+el("panelHead").addEventListener("click",()=>el("panel").classList.toggle("open"));
+el("search").addEventListener("input",e=>{query=e.target.value.trim();recompute();});
+
+/* -------------------- AVVIO -------------------- */
+function header(){
+  el("todayLabel").textContent="Briefing · "+new Date().toLocaleDateString("it-IT",{weekday:"long",day:"numeric",month:"long"});
+  el("status").textContent=`${jobs.length} offerte in archivio · ultimo aggiornamento ${new Date().toLocaleDateString("it-IT")}`;
+}
+async function init(){
+  try{
+    const r=await fetch("./jobs.json",{cache:"no-store"});
+    if(!r.ok) throw 0;
+    const data=await r.json();
+    jobs=Array.isArray(data)?data:(data.jobs||[]);
+    if(!jobs.length) throw 0;
+  }catch(e){
+    jobs=DEMO; el("demoBanner").hidden=false;
+    el("status").textContent="Anteprima con dati di esempio — pubblica jobs.json per i dati reali";
+    header(); renderCriteria(); recompute(); return;
+  }
+  header(); renderCriteria(); recompute();
+}
+init();
+</script>
+</body>
+</html>
